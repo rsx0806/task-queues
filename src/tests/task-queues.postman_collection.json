@@ -1,0 +1,456 @@
+{
+  "info": {
+    "_postman_id": "b1e2c3d4-5678-1234-9abc-def012345678",
+    "name": "Task Queues API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection for testing REST and GraphQL endpoints of the Task Queues microservice."
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Task (REST)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Test Task\",\n  \"description\": \"Test description\",\n  \"dueDate\": \"2025-12-31T23:59:59.000Z\",\n  \"status\": \"open\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/tasks",
+          "host": ["{{baseUrl}}"],
+          "path": ["tasks"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Response has task object\", function () {",
+              "  pm.expect(json).to.have.property(\"id\");",
+              "  pm.expect(json).to.have.property(\"title\");",
+              "  pm.expect(json).to.have.property(\"description\");",
+              "  pm.expect(json).to.have.property(\"dueDate\");",
+              "  pm.expect(json).to.have.property(\"status\");",
+              "});",
+              "pm.collectionVariables.set(\"taskId\", json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Task (REST)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Updated Task\",\n  \"status\": \"in_progress\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/tasks/{{taskId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["tasks", "{{taskId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Task updated\", function () {",
+              "  pm.expect(json).to.have.property(\"id\");",
+              "  pm.expect(json.title).to.eql(\"Updated Task\");",
+              "  pm.expect(json).to.have.property(\"status\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Task by ID (REST)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/tasks/{{taskId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["tasks", "{{taskId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Task object returned\", function () {",
+              "  pm.expect(json).to.have.property(\"id\");",
+              "  pm.expect(json).to.have.property(\"title\");",
+              "  pm.expect(json).to.have.property(\"description\");",
+              "  pm.expect(json).to.have.property(\"dueDate\");",
+              "  pm.expect(json).to.have.property(\"status\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Tasks (REST)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/tasks?status=open",
+          "host": ["{{baseUrl}}"],
+          "path": ["tasks"],
+          "query": [
+            {
+              "key": "status",
+              "value": "open"
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Response is array\", function () {",
+              "  pm.expect(Array.isArray(json)).to.be.true;",
+              "});",
+              "pm.test(\"All tasks have correct status\", function () {",
+              "  json.forEach(task => {",
+              "    pm.expect(task.status).to.be.oneOf([\"open\", \"in_progress\", \"completed\"]);",
+              "  });",
+              "});",
+              "const statusParam = pm.request.url.query.toObject().status;",
+              "if (statusParam) {",
+              "  pm.test(\"All tasks have status \" + statusParam, function () {",
+              "    json.forEach(task => {",
+              "      pm.expect(task.status).to.eql(statusParam);",
+              "    });",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL: Create Task",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation CreateTask($input: CreateTaskInput!) {\n  createTask(input: $input) {\n    id\n    title\n    description\n    status\n    dueDate\n  }\n}",
+            "variables": "{\n  \"input\": {\n    \"title\": \"GraphQL Task\",\n    \"description\": \"GraphQL description\",\n    \"dueDate\": \"2025-12-31T23:59:59.000Z\",\n    \"status\": \"open\"\n  }\n}"
+          }
+        },
+        "url": {
+          "raw": "{{graphqlUrl}}/graphql",
+          "host": ["{{graphqlUrl}}"],
+          "path": ["graphql"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Task created in GraphQL\", function () {",
+              "  pm.expect(json.data.createTask).to.have.property(\"id\");",
+              "  pm.expect(json.data.createTask).to.have.property(\"title\");",
+              "  pm.expect(json.data.createTask).to.have.property(\"status\");",
+              "  pm.expect(json.data.createTask.status).to.eql(\"open\");",
+              "});",
+              "pm.collectionVariables.set(\"taskId\", json.data.createTask.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL: Update Task",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation UpdateTask($id: ID!, $input: UpdateTaskInput!) {\n  updateTask(id: $id, input: $input) {\n    id\n    title\n    status\n    dueDate\n  }\n}",
+            "variables": "{\n  \"id\": \"{{taskId}}\",\n  \"input\": {\n    \"title\": \"GraphQL Updated Task\",\n    \"status\": \"completed\"\n  }\n}"
+          }
+        },
+        "url": {
+          "raw": "{{graphqlUrl}}/graphql",
+          "host": ["{{graphqlUrl}}"],
+          "path": ["graphql"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Task updated in GraphQL\", function () {",
+              "  pm.expect(json.data.updateTask).to.have.property(\"id\");",
+              "  pm.expect(json.data.updateTask.title).to.eql(\"GraphQL Updated Task\");",
+              "  pm.expect(json.data.updateTask).to.have.property(\"status\");",
+              "  pm.expect(json.data.updateTask.status).to.eql(\"completed\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL: Get Task by ID",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query GetTask($id: ID!) {\n  getTask(id: $id) {\n    id\n    title\n    description\n    status\n    dueDate\n  }\n}",
+            "variables": "{\n  \"id\": \"{{taskId}}\"\n}"
+          }
+        },
+        "url": {
+          "raw": "{{graphqlUrl}}/graphql",
+          "host": ["{{graphqlUrl}}"],
+          "path": ["graphql"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Task returned by id in GraphQL\", function () {",
+              "  pm.expect(json.data.getTask).to.have.property(\"id\");",
+              "  pm.expect(json.data.getTask).to.have.property(\"title\");",
+              "  pm.expect(json.data.getTask).to.have.property(\"status\");",
+              "  pm.expect(json.data.getTask.status).to.eql(\"completed\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL: Get All Tasks",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query GetTasks($status: TaskStatus) {\n  getTasks(status: $status) {\n    id\n    title\n    description\n    status\n    dueDate\n  }\n}",
+            "variables": "{\n  \"status\": \"open\"\n}"
+          }
+        },
+        "url": {
+          "raw": "{{graphqlUrl}}/graphql",
+          "host": ["{{graphqlUrl}}"],
+          "path": ["graphql"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"All GraphQL tasks have correct status\", function () {",
+              "  json.data.getTasks.forEach(task => {",
+              "    pm.expect(task.status).to.be.oneOf([\"open\", \"in_progress\", \"completed\"]);",
+              "  });",
+              "});",
+              "const statusVar = pm.request.body && pm.request.body.graphql && pm.request.body.graphql.variables ? JSON.parse(pm.request.body.graphql.variables).status : undefined;",
+              "if (statusVar) {",
+              "  pm.test(\"All tasks have status \" + statusVar, function () {",
+              "    json.data.getTasks.forEach(task => {",
+              "      pm.expect(task.status).to.eql(statusVar);",
+              "    });",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Task (REST, Invalid Data)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"This title is way too long and should trigger a validation error because it exceeds the allowed length limit for a task title in the API\",\n  \"description\": \"Test invalid\",\n  \"dueDate\": \"2025-12-31T23:59:59.000Z\",\n  \"status\": \"open\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/tasks",
+          "host": ["{{baseUrl}}"],
+          "path": ["tasks"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Error message present\", function () {",
+              "  pm.expect(json).to.have.property(\"error\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL: Create Task (Invalid Data)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "mutation CreateTask($input: CreateTaskInput!) {\n  createTask(input: $input) {\n    id\n    title\n    description\n    status\n    dueDate\n  }\n}",
+            "variables": "{\n  \"input\": {\n    \"title\": \"This title is way too long and should trigger a validation error because it exceeds the allowed length limit for a task title in the API\",\n    \"description\": \"GraphQL invalid\",\n    \"dueDate\": \"2025-12-31T23:59:59.000Z\",\n    \"status\": \"open\"\n  }\n}"
+          }
+        },
+        "url": {
+          "raw": "{{graphqlUrl}}/graphql",
+          "host": ["{{graphqlUrl}}"],
+          "path": ["graphql"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"GraphQL error for invalid input\", function () {",
+              "  pm.expect(json).to.have.property(\"errors\");",
+              "  pm.expect(json.errors[0].message).to.include(\"title\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "event": [],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "graphqlUrl", "value": "http://localhost:4000" },
+    { "key": "taskId", "value": "" }
+  ]
+} 

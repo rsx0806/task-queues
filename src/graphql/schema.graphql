@@ -1,0 +1,37 @@
+enum TaskStatus {
+  open
+  in_progress
+  completed
+  overdue
+}
+
+type Task {
+  id: ID!
+  title: String!
+  description: String
+  status: TaskStatus!
+  dueDate: String!
+}
+
+type Query {
+  getTask(id: ID!): Task
+  getTasks(status: TaskStatus): [Task!]!
+}
+
+input CreateTaskInput {
+  title: String! @constraint(minLength: 1, maxLength: 100)
+  description: String
+  dueDate: String!
+  status: TaskStatus!
+}
+
+input UpdateTaskInput {
+  title: String @constraint(minLength: 1, maxLength: 100)
+  description: String
+  status: TaskStatus
+}
+
+type Mutation {
+  createTask(input: CreateTaskInput!): Task!
+  updateTask(id: ID!, input: UpdateTaskInput!): Task
+} 
