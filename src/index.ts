@@ -34,9 +34,7 @@ const start = async () => {
     await rabbitMQService.connect();
     fastify.log.info('Connected to RabbitMQ');
     
-    await rabbitMQService.consumeTaskEvents((event) => {
-      fastify.log.info({ event }, 'Consumed task event from RabbitMQ');
-    });
+    await rabbitMQService.consumeTaskEvents(() => {});
     await registerTaskRoutes(fastify, taskService, rabbitMQService);
 
     const typeDefs = [constraintDirectiveTypeDefs, readFileSync('./src/graphql/schema.graphql', 'utf-8')];
@@ -55,7 +53,7 @@ const start = async () => {
 
     await fastify.listen({ port: 3000, host: '0.0.0.0' });
     fastify.log.info('Server started on http://localhost:3000');
-  } catch (err) {
+  } catch (err: unknown) {
     fastify.log.error(err);
     process.exit(1);
   }

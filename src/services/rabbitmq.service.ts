@@ -49,6 +49,7 @@ export class RabbitMQService {
       if (msg) {
         const event: TaskEvent = JSON.parse(msg.content.toString());
         onEvent(event);
+        this.logger.info(`Task ${event.taskId} was ${event.action} at ${event.timestamp}`);
         this.channel.ack(msg);
       }
     });
